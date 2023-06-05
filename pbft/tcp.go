@@ -8,7 +8,7 @@ import (
 )
 
 // 客户端使用的tcp监听
-func clientTcpListen() {
+func clientTcpListen(clientAddr string) {
 	listen, err := net.Listen("tcp", clientAddr)
 	if err != nil {
 		log.Panic(err)
