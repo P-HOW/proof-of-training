@@ -62,7 +62,8 @@ const (
 	cCommit     command = "commit"
 )
 
-// 默认前十二位为命令名称
+// Join command and content in bytes.
+// The default first twelve bytes are the command name.
 func jointMessage(cmd command, content []byte) []byte {
 	b := make([]byte, prefixCMDLength)
 	for i, v := range []byte(cmd) {
@@ -73,7 +74,8 @@ func jointMessage(cmd command, content []byte) []byte {
 	return joint
 }
 
-// 默认前十二位为命令名称
+// Split command and content in bytes.
+// The default first twelve bytes are the command name.
 func splitMessage(message []byte) (cmd string, content []byte) {
 	cmdBytes := message[:prefixCMDLength]
 	newCMDBytes := make([]byte, 0)
