@@ -19,20 +19,20 @@ import (
 func genRsaKeys() {
 	if !isExist("./Keys") {
 		fmt.Println("the public and private key directory has not been generated yet, generating public and private keys...")
-		err := os.Mkdir("Keys", 0644)
+		err := os.Mkdir("Keys", 0755)
 		if err != nil {
 			log.Panic()
 		}
 		for i := 0; i <= 4; i++ {
 			if !isExist("./Keys/N" + strconv.Itoa(i)) {
-				err := os.Mkdir("./Keys/N"+strconv.Itoa(i), 0644)
+				err := os.Mkdir("./Keys/N"+strconv.Itoa(i), 0755)
 				if err != nil {
 					log.Panic()
 				}
 			}
 			priv, pub := getKeyPair()
 			privFileName := "Keys/N" + strconv.Itoa(i) + "/N" + strconv.Itoa(i) + "_RSA_PIV"
-			file, err := os.OpenFile(privFileName, os.O_RDWR|os.O_CREATE, 0644)
+			file, err := os.OpenFile(privFileName, os.O_RDWR|os.O_CREATE, 0755)
 			if err != nil {
 				log.Panic(err)
 			}
@@ -40,7 +40,7 @@ func genRsaKeys() {
 			file.Write(priv)
 
 			pubFileName := "Keys/N" + strconv.Itoa(i) + "/N" + strconv.Itoa(i) + "_RSA_PUB"
-			file2, err := os.OpenFile(pubFileName, os.O_RDWR|os.O_CREATE, 0644)
+			file2, err := os.OpenFile(pubFileName, os.O_RDWR|os.O_CREATE, 0755)
 			if err != nil {
 				log.Panic(err)
 			}
