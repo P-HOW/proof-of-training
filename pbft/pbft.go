@@ -10,9 +10,6 @@ import (
 	"sync"
 )
 
-// Local message pool (simulating the persistence layer), only after the confirmation of successful commit will the messages be stored in this pool.
-var localMessagePool = []Message{}
-
 // Node table for broadcasting
 type nodeTable map[string]string
 
@@ -53,6 +50,9 @@ type pbft struct {
 	nodeTable nodeTable
 
 	nodeCount int
+
+	// Local message pool (simulating the persistence layer), only after the confirmation of successful commit will the messages be stored in this pool.
+	localMessagePool []Message
 }
 
 func NewPBFT(nodeID, addr string, nodeCount int) *pbft {
@@ -69,6 +69,7 @@ func NewPBFT(nodeID, addr string, nodeCount int) *pbft {
 	p.isReply = make(map[string]bool)
 	p.nodeTable = make(map[string]string)
 	p.nodeCount = nodeCount
+	p.localMessagePool = []Message{}
 	return p
 }
 
@@ -242,7 +243,7 @@ func (p *pbft) handleCommit(content []byte, nodeCount int) {
 		if count >= nodeCount/3*2 && !p.isReply[c.Digest] && p.isCommitBordcast[c.Digest] {
 			fmt.Println("This node has received at least 2f + 1 Commit messages (including the local node) from other nodes ...")
 			//The message information is being submitted to the local message pool!
-			localMessagePool = append(localMessagePool, p.messagePool[c.Digest].Message)
+			p.localMessagePool = append(p.localMessagePool, p.messagePool[c.Digest].Message)
 			info := p.node.nodeID + "node has put msgid:" + strconv.Itoa(p.messagePool[c.Digest].ID) + "into the local message pool,message content：" + p.messagePool[c.Digest].Content
 			fmt.Println(info)
 			fmt.Println("Replying to client ...")
