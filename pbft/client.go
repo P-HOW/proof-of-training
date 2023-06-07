@@ -7,12 +7,20 @@ import (
 	"log"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 )
 
-func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data string) {
+func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data string, numNodes int) {
+	var wg sync.WaitGroup
+
 	//Start local monitoring of the client (mainly used to receive reply information from nodes).
-	go clientTcpListen(clientAddr)
+	go func() {
+		defer wg.Done()
+		clientTcpListen(clientAddr, numNodes)
+	}()
+
+	wg.Add(1) // Expect numNodes number of replies
 
 	r := new(Request)
 	r.Timestamp = time.Now().UnixNano()
@@ -26,8 +34,13 @@ func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data str
 	}
 	fmt.Println(string(br))
 	content := jointMessage(cRequest, br)
+	currentTime := time.Now()
 	//N0 is the primary node, and the request information is sent directly to N0 by default
 	tcpDial(content, nodeTable["N0"])
+
+	wg.Wait() // Wait for all the replies before proceeding
+	fmt.Println("elapsed time: ")
+	fmt.Println(time.Since(currentTime).Seconds())
 
 }
 
