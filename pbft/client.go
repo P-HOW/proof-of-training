@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data string, numNodes int) {
+func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data string, numNodes int) float64 {
 	var wg sync.WaitGroup
 
 	//Start local monitoring of the client (mainly used to receive reply information from nodes).
@@ -39,8 +39,8 @@ func clientSendMessageAndListen(clientAddr string, nodeTable nodeTable, data str
 	tcpDial(content, nodeTable["N0"])
 
 	wg.Wait() // Wait for all the replies before proceeding
-	fmt.Println("elapsed time: ")
-	fmt.Println(time.Since(currentTime).Seconds())
+
+	return time.Since(currentTime).Seconds()
 
 }
 
