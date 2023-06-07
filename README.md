@@ -14,8 +14,8 @@ Golang execution layer implementation of the decentralized training network usin
 
 ## Table Of Content
 
-- [Installation](#installation)
-    - [Composer](#composer)
+- [Layer-1 Implementation(L1)](#layer-1-implementation)
+    - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
     - [DDev or Colima](#ddev)
     - [TER](#ter-extension)
 - [TYPO3 setup](#typo3-setup)
@@ -31,19 +31,19 @@ Golang execution layer implementation of the decentralized training network usin
 - [License](#license)
 - [Links](#links)
 
-## Installation
+## Layer-1 Implementation
 
-This document is for the latest Aimeos TYPO3 **22.10 release and later**.
+This section focuses on two fundamental aspects of our Layer-1 (L1) implementation, namely:
 
-- stable release: 23.04 (TYPO3 12 LTS)
-- LTS release: 22.10 (TYPO3 11 LTS)
+- **Global Ledger Maintenance and Synchronization** 
+- Multisignature Coordination
 
-### Composer
+Our L1 implementation uses the [Practical Byzantine Fault Tolerance (PBFT)](https://pmg.csail.mit.edu/papers/osdi99.pdf) protocol, which ensures consensus among nodes in a distributed network, even in the presence of malicious nodes or if certain nodes fail.
 
-**Note:** composer 2.1+ is required!
 
-The latest TYPO3 version can be installed via composer. This is especially useful, if you want to create new TYPO3 installations automatically or play with the latest code. You need to install the composer package first, if it isn't already available:
+### PBFT Package
 
+The PBFT package ensures the uniformity of our global ledger by facilitating consensus among nodes on the set of transactions to be added. These approved transactions are synced to the global transaction pool, from which they are used to update the global ledger, ensuring data consistency across the network.
 ```bash
 php -r "readfile('https://getcomposer.org/installer');" | php -- --filename=composer
 ```
