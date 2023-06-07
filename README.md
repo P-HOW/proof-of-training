@@ -10,7 +10,7 @@
 
 Golang execution layer implementation of the decentralized training network using proof of training (POT).
 
-![DTN](https://i.ibb.co/JFKCF9R/dtn.jpg)
+![DTN](https://github.com/P-HOW/proof-of-training/blob/master/img/dtn.jpg?raw=true)
 
 ## Table Of Content
 
