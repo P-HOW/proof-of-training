@@ -121,7 +121,7 @@ func (p *pbft) handleClientRequest(content []byte) {
 
 // Process PrePrepare message
 func (p *pbft) handlePrePrepare(content []byte) {
-	fmt.Println("This node has received the PrePrepare message sent by the primary node ...")
+	//fmt.Println("This node has received the PrePrepare message sent by the primary node ...")
 	//Parse out the PrePrepare structure using JSON
 	pp := new(PrePrepare)
 	err := json.Unmarshal(content, pp)
@@ -141,7 +141,7 @@ func (p *pbft) handlePrePrepare(content []byte) {
 		//Assigning the sequence number
 		p.sequenceID = pp.SequenceID
 		//Storing the information in the temporary message pool
-		fmt.Println("The message has been stored in the temporary node pool")
+		//fmt.Println("The message has been stored in the temporary node pool")
 		p.messagePool[pp.Digest] = pp.RequestMessage
 		//The node signs it with its private key
 		sign := p.RsaSignWithSha256(digestByte, p.node.rsaPrivKey)
@@ -152,9 +152,9 @@ func (p *pbft) handlePrePrepare(content []byte) {
 			log.Panic(err)
 		}
 		//进行准备阶段的广播
-		fmt.Println("broadcasting the Prepare message...")
+		//fmt.Println("broadcasting the Prepare message...")
 		p.broadcast(cPrepare, bPre)
-		fmt.Println("Prepare broadcast is completed.")
+		//fmt.Println("Prepare broadcast is completed.")
 	}
 }
 
@@ -166,7 +166,7 @@ func (p *pbft) handlePrepare(content []byte, nodeCount int) {
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Printf("The node has received Prepare from node %s ... \n", pre.NodeID)
+	//fmt.Printf("The node has received Prepare from node %s ... \n", pre.NodeID)
 	//To obtain the public key of the message source node for digital signature verification
 	MessageNodePubKey := p.getPubKey(pre.NodeID)
 	digestByte, _ := hex.DecodeString(pre.Digest)
@@ -194,7 +194,7 @@ func (p *pbft) handlePrepare(content []byte, nodeCount int) {
 		p.lock.Lock()
 		//To obtain the public key of the message source node for digital signature verification
 		if count >= specifiedCount && !p.isCommitBordcast[pre.Digest] {
-			fmt.Println("This node has received at least 2f Prepare messages (including the local node) from other nodes ...")
+			//fmt.Println("This node has received at least 2f Prepare messages (including the local node) from other nodes ...")
 			//The node signs it with its private key
 			sign := p.RsaSignWithSha256(digestByte, p.node.rsaPrivKey)
 			c := Commit{pre.Digest, pre.SequenceID, p.node.nodeID, sign}
@@ -203,10 +203,10 @@ func (p *pbft) handlePrepare(content []byte, nodeCount int) {
 				log.Panic(err)
 			}
 			//Broadcasting the commit message
-			fmt.Println("broadcasting the commit message...")
+			//fmt.Println("broadcasting the commit message...")
 			p.broadcast(cCommit, bc)
 			p.isCommitBordcast[pre.Digest] = true
-			fmt.Println("commit broadcast is completed")
+			//fmt.Println("commit broadcast is completed")
 		}
 		p.lock.Unlock()
 	}
@@ -220,7 +220,7 @@ func (p *pbft) handleCommit(content []byte, nodeCount int) {
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Printf("The node has received Commit from node %s ... \n", c.NodeID)
+	//fmt.Printf("The node has received Commit from node %s ... \n", c.NodeID)
 	//To obtain the public key of the message source node for digital signature verification
 	MessageNodePubKey := p.getPubKey(c.NodeID)
 	digestByte, _ := hex.DecodeString(c.Digest)
@@ -241,15 +241,15 @@ func (p *pbft) handleCommit(content []byte, nodeCount int) {
 		//and a successful flag is replied to the client!
 		p.lock.Lock()
 		if count >= nodeCount/3*2 && !p.isReply[c.Digest] && p.isCommitBordcast[c.Digest] {
-			fmt.Println("This node has received at least 2f + 1 Commit messages (including the local node) from other nodes ...")
+			//fmt.Println("This node has received at least 2f + 1 Commit messages (including the local node) from other nodes ...")
 			//The message information is being submitted to the local message pool!
 			p.localMessagePool = append(p.localMessagePool, p.messagePool[c.Digest].Message)
 			info := p.node.nodeID + "node has put msgid:" + strconv.Itoa(p.messagePool[c.Digest].ID) + "into the local message pool,message content：" + p.messagePool[c.Digest].Content
-			fmt.Println(info)
-			fmt.Println("Replying to client ...")
+			//fmt.Println(info)
+			//fmt.Println("Replying to client ...")
 			tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr)
 			p.isReply[c.Digest] = true
-			fmt.Println("replying done!")
+			//fmt.Println("replying done!")
 		}
 		p.lock.Unlock()
 	}
