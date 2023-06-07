@@ -16,14 +16,14 @@ import (
 
 // If the 'Keys' directory does not exist in the current directory, create the directory,
 // and generate RSA public and private keys for each node.
-func genRsaKeys() {
+func genRsaKeys(numNodes int) {
 	if !isExist("./Keys") {
 		fmt.Println("the public and private key directory has not been generated yet, generating public and private keys...")
 		err := os.Mkdir("Keys", 0755)
 		if err != nil {
 			log.Panic()
 		}
-		for i := 0; i <= 4; i++ {
+		for i := 0; i <= numNodes; i++ {
 			if !isExist("./Keys/N" + strconv.Itoa(i)) {
 				err := os.Mkdir("./Keys/N"+strconv.Itoa(i), 0755)
 				if err != nil {
