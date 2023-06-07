@@ -44,17 +44,73 @@ Our L1 implementation uses the [Practical Byzantine Fault Tolerance (PBFT)](http
 ### PBFT Package
 
 The PBFT package ensures the uniformity of our global ledger by facilitating consensus among nodes on the set of transactions to be added. These approved transactions are synced to the global transaction pool, from which they are used to update the global ledger, ensuring data consistency across the network.
-```bash
-php -r "readfile('https://getcomposer.org/installer');" | php -- --filename=composer
+
+#### Functionality Implemented:
+> PBFT formula: n >= 3f + 1 where n is the total number of nodes in the entire network, and f is the maximum number of malicious or faulty nodes allowed.
+
+The data from client input to receiving replies from the nodes is divided into 5 steps:
+
+1. The client sends request information to the primary node.
+2. After the primary node N0 receives the request from the client, it extracts the main information from the request data and sends a preprepare to the other nodes.
+3. The secondary nodes receive the preprepare from the primary node, firstly using the primary node's public key for signature authentication, then hash the message (message digest, to reduce the size of the information transmitted in the network), and broadcast a prepare to other nodes.
+4. When a node receives 2f prepare information (including itself), and all signature verifications pass, it can proceed to the commit step, broadcasting a commit to all other nodes in the network.
+5. When a node receives 2f+1 commit information (including itself), and all signature verifications pass, it can store the message locally, and return a reply message to the client.
+   
+![DTN](https://github.com/P-HOW/proof-of-training/blob/master/img/PBFTflow.png?raw=true)
+
+To spawn a network applying PBFT with `numNodes` nodes, and to synchronize 
+the transaction pool with transactions encoded in `data`, 
+it is recommended to use the following function. This will help 
+analyze the time needed for `data` synchronization.
+
+Field | Data Types | Recommended Value
+----  |------------| ----------
+numNodes  | int        | 5-100
+data  | string     | -
+clientAddr  | string     | "127.0.0.1:8888"
+
+```go
+synctime := genPBFTSynchronize(numNodes, data, clientAddr)
+```
+> Note: The current implementations in the pbft package may contain 
+> potential race conditions, potentially leading to non-terminating 
+> execution. It is essential to implement a timing mechanism when using 
+> this function for efficient operation.
+
+#### pbft_test.go
+```go
+package pbft
+
+import (
+  "strconv"
+  "testing"
+)
+
+func TestAddAndGetMessage(t *testing.T) {
+  var clientAddr = "127.0.0.1:8888"
+  var data = "transactions to be synchronized"
+  var numNodes = 8
+  sync_time := genPBFTSynchronize(numNodes, data, clientAddr)
+  s := strconv.FormatFloat(sync_time, 'f', -1, 64)
+  println("It takes " + s + " seconds to synchronize the transactions to the global ledger")
+}
+```
+#### output
+```text
+=== RUN   TestAddAndGetMessage
+the public and private key directory has not been generated yet, generating public and private keys...
+RSA public and private keys have been generated for the nodes.
+initiating client...
+{"Content":"transactions to be synchronized","ID":2818938398,"Timestamp":1686148966474242384,"ClientAddr":"127.0.0.1:8888"}
+The primary node has received a request from the client...
+The request has been stored in the temporary message pool.
+Broadcasting PrePrepare to other nodes...
+PrePrepare broadcast completed.
+It takes 0.032963246 seconds to synchronize the transactions to the global ledger
+--- PASS: TestAddAndGetMessage (0.12s)
+PASS
 ```
 
-To install the TYPO3 base distribution first, execute this command:
-
-```bash
-composer create-project typo3/cms-base-distribution myshop
-# or install a specific TYPO3 version:
-composer create-project "typo3/cms-base-distribution:^12" myshop
-```
 
 It will install TYPO3 into the `./myshop/` directory. Change into the directory and install TYPO3 as usual:
 
