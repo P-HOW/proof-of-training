@@ -55,7 +55,7 @@ type pbft struct {
 	localMessagePool []Message
 }
 
-func NewPBFT(nodeID, addr string, nodeCount int) *pbft {
+func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int) *pbft {
 	p := new(pbft)
 	p.node.nodeID = nodeID
 	p.node.addr = addr
@@ -67,7 +67,7 @@ func NewPBFT(nodeID, addr string, nodeCount int) *pbft {
 	p.commitConfirmCount = make(map[string]map[string]bool)
 	p.isCommitBordcast = make(map[string]bool)
 	p.isReply = make(map[string]bool)
-	p.nodeTable = make(map[string]string)
+	p.nodeTable = nodeTable
 	p.nodeCount = nodeCount
 	p.localMessagePool = []Message{}
 	return p
