@@ -1,7 +1,6 @@
 package pbft
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -41,7 +40,7 @@ func (p *pbft) tcpListen(ready chan<- bool) {
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Printf("Node listening starts, address：%s\n", p.node.addr)
+	//fmt.Printf("Node listening starts, address：%s\n", p.node.addr)
 	defer listen.Close()
 	ready <- true // Signal that the server is ready
 	for {
