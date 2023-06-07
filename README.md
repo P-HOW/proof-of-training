@@ -10,8 +10,7 @@
 
 Golang execution layer implementation of the decentralized training network using proof of training (POT).
 
-![aimeos-frontend](https://user-images.githubusercontent.com/8647429/212348410-55cbaa00-722a-4a30-8b57-da9e173e0675.jpg)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+![DTN](https://i.ibb.co/JFKCF9R/dtn.jpg)
 
 ## Table Of Content
 
