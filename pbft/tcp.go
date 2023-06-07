@@ -24,7 +24,8 @@ func clientTcpListen(clientAddr string, numNodes int) {
 		if err != nil {
 			log.Panic(err)
 		}
-		fmt.Println("client received" + string(b))
+		//fmt.Println("client received" + string(b))
+		_ = b
 		count++
 		if count == numNodes {
 			break
