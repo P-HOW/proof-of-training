@@ -1,17 +1,22 @@
 package pbft
 
 import (
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"strconv"
 	"sync"
 )
-
-// Node table for broadcasting
-type nodeTable map[string]string
 
 type node struct {
 	//Node ID
@@ -53,6 +58,12 @@ type pbft struct {
 
 	// Local message pool (simulating the persistence layer), only after the confirmation of successful commit will the messages be stored in this pool.
 	localMessagePool []Message
+
+	// Temp prepare pool (simulating the unconfirmed layer), only after getting the prepare from view will this be moved forward.
+	tempPreparePool []Prepare
+
+	//Temp commit pool (simulating the unconfirmed layer), only after getting the map true
+	tempCommitPool []Commit
 }
 
 func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int) *pbft {
@@ -70,6 +81,8 @@ func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int) *pbft {
 	p.nodeTable = nodeTable
 	p.nodeCount = nodeCount
 	p.localMessagePool = []Message{}
+	p.tempPreparePool = []Prepare{}
+	p.tempCommitPool = []Commit{}
 	return p
 }
 
@@ -82,9 +95,9 @@ func (p *pbft) handleRequest(data []byte) {
 	case cPrePrepare:
 		p.handlePrePrepare(content)
 	case cPrepare:
-		p.handlePrepare(content, p.nodeCount)
+		p.handlePrepare(content)
 	case cCommit:
-		p.handleCommit(content, p.nodeCount)
+		p.handleCommit(content)
 	}
 }
 
@@ -144,6 +157,10 @@ func (p *pbft) handlePrePrepare(content []byte) {
 		//fmt.Println("The message has been stored in the temporary node pool")
 		p.messagePool[pp.Digest] = pp.RequestMessage
 		//The node signs it with its private key
+		// Handles the tempPreparePool and tempCommitPool and execute prepare or commit
+		//it will be broadcasted by primary node so it will be executed only once
+		p.handleTempPool()
+
 		sign := p.RsaSignWithSha256(digestByte, p.node.rsaPrivKey)
 		//Concatenate to form a Prepare message
 		pre := Prepare{pp.Digest, pp.SequenceID, p.node.nodeID, sign}
@@ -151,15 +168,16 @@ func (p *pbft) handlePrePrepare(content []byte) {
 		if err != nil {
 			log.Panic(err)
 		}
-		//进行准备阶段的广播
+
 		//fmt.Println("broadcasting the Prepare message...")
 		p.broadcast(cPrepare, bPre)
 		//fmt.Println("Prepare broadcast is completed.")
+
 	}
 }
 
 // Process the Prepare message
-func (p *pbft) handlePrepare(content []byte, nodeCount int) {
+func (p *pbft) handlePrepare(content []byte) {
 	//Parse out the Prepare structure using JSON
 	pre := new(Prepare)
 	err := json.Unmarshal(content, pre)
@@ -171,49 +189,18 @@ func (p *pbft) handlePrepare(content []byte, nodeCount int) {
 	MessageNodePubKey := p.getPubKey(pre.NodeID)
 	digestByte, _ := hex.DecodeString(pre.Digest)
 	if _, ok := p.messagePool[pre.Digest]; !ok {
-		fmt.Println("The current temporary message pool does not have this digest. Refusing to execute commit broadcast")
+		p.tempPreparePool = append(p.tempPreparePool, *pre)
 	} else if p.sequenceID != pre.SequenceID {
 		fmt.Println("The message sequence number doesn't match. Refusing to execute commit broadcast")
 	} else if !p.RsaVerySignWithSha256(digestByte, pre.Sign, MessageNodePubKey) {
 		fmt.Println("The node signature verification failed! Refusing to execute commit broadcast")
 	} else {
-		p.setPrePareConfirmMap(pre.Digest, pre.NodeID, true)
-		count := 0
-		for range p.prePareConfirmCount[pre.Digest] {
-			count++
-		}
-		//Because the primary node does not send Prepare, it does not include itself
-		specifiedCount := 0
-		if p.node.nodeID == "N0" {
-			specifiedCount = nodeCount / 3 * 2
-		} else {
-			specifiedCount = (nodeCount / 3 * 2) - 1
-		}
-		//If a node has received at least 2f Prepare messages (including itself) and
-		//has not yet performed a commit broadcast, it will proceed with a commit broadcast
-		p.lock.Lock()
-		//To obtain the public key of the message source node for digital signature verification
-		if count >= specifiedCount && !p.isCommitBordcast[pre.Digest] {
-			//fmt.Println("This node has received at least 2f Prepare messages (including the local node) from other nodes ...")
-			//The node signs it with its private key
-			sign := p.RsaSignWithSha256(digestByte, p.node.rsaPrivKey)
-			c := Commit{pre.Digest, pre.SequenceID, p.node.nodeID, sign}
-			bc, err := json.Marshal(c)
-			if err != nil {
-				log.Panic(err)
-			}
-			//Broadcasting the commit message
-			//fmt.Println("broadcasting the commit message...")
-			p.broadcast(cCommit, bc)
-			p.isCommitBordcast[pre.Digest] = true
-			//fmt.Println("commit broadcast is completed")
-		}
-		p.lock.Unlock()
+		p.prepareStageHandle(*pre, digestByte)
 	}
 }
 
 // Processing the commit
-func (p *pbft) handleCommit(content []byte, nodeCount int) {
+func (p *pbft) handleCommit(content []byte) {
 	//Parse out the Commit structure using JSON
 	c := new(Commit)
 	err := json.Unmarshal(content, c)
@@ -224,8 +211,9 @@ func (p *pbft) handleCommit(content []byte, nodeCount int) {
 	//To obtain the public key of the message source node for digital signature verification
 	MessageNodePubKey := p.getPubKey(c.NodeID)
 	digestByte, _ := hex.DecodeString(c.Digest)
+
 	if _, ok := p.prePareConfirmCount[c.Digest]; !ok {
-		fmt.Println("The current Prepare pool does not have this digest. Refusing to persist the information to the local message pool")
+		p.tempCommitPool = append(p.tempCommitPool, *c)
 	} else if p.sequenceID != c.SequenceID {
 		fmt.Println("The message sequence number doesn't match. Refusing to persist the information to the local message pool")
 	} else if !p.RsaVerySignWithSha256(digestByte, c.Sign, MessageNodePubKey) {
@@ -240,7 +228,7 @@ func (p *pbft) handleCommit(content []byte, nodeCount int) {
 		//and a commit broadcast has been performed, then the information is submitted to the local message pool,
 		//and a successful flag is replied to the client!
 		p.lock.Lock()
-		if count >= nodeCount/3*2 && !p.isReply[c.Digest] && p.isCommitBordcast[c.Digest] {
+		if count >= p.nodeCount/3*2 && !p.isReply[c.Digest] && p.isCommitBordcast[c.Digest] {
 			//fmt.Println("This node has received at least 2f + 1 Commit messages (including the local node) from other nodes ...")
 			//The message information is being submitted to the local message pool!
 			p.localMessagePool = append(p.localMessagePool, p.messagePool[c.Digest].Message)
@@ -264,11 +252,12 @@ func (p *pbft) sequenceIDAdd() {
 
 // Broadcasting to other nodes except itself
 func (p *pbft) broadcast(cmd command, content []byte) {
+	message := jointMessage(cmd, content)
 	for i := range p.nodeTable {
 		if i == p.node.nodeID {
 			continue
 		}
-		message := jointMessage(cmd, content)
+
 		go tcpDial(message, p.nodeTable[i])
 	}
 }
@@ -307,37 +296,189 @@ func (p *pbft) getPivKey(nodeID string) []byte {
 	return key
 }
 
-func genPBFTSynchronize(numNodes int, data string, clientAddr string) float64 {
-
-	var wg sync.WaitGroup
-	var elapsedTime float64
-
-	genRsaKeys(numNodes)
-
-	nodeTable := make(map[string]string) // Initialize the map
-	for i := 0; i < numNodes; i++ {
-		nodeID := fmt.Sprintf("N%d", i)
-		nodeTable[nodeID] = fmt.Sprintf("127.0.0.1:%d", 8000+i)
+// Digital signature
+func (p *pbft) RsaSignWithSha256(data []byte, keyBytes []byte) []byte {
+	h := sha256.New()
+	h.Write(data)
+	hashed := h.Sum(nil)
+	block, _ := pem.Decode(keyBytes)
+	if block == nil {
+		panic(errors.New("private key error"))
+	}
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		fmt.Println("ParsePKCS8PrivateKey err", err)
+		panic(err)
 	}
 
-	ready := make(chan bool, numNodes) // Create a buffered channel
-	for i := 0; i < numNodes; i++ {
-		nodeID := fmt.Sprintf("N%d", i)
-		p := NewPBFT(nodeID, nodeTable[nodeID], nodeTable, numNodes)
-		go p.tcpListen(ready) // Pass the 'ready' channel to tcpListen
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed)
+	if err != nil {
+		fmt.Printf("Error from signing: %s\n", err)
+		panic(err)
 	}
 
-	for i := 0; i < numNodes; i++ {
-		<-ready // Wait for all nodes to signal readiness
+	return signature
+}
+
+// Verify signature
+func (p *pbft) RsaVerySignWithSha256(data, signData, keyBytes []byte) bool {
+	block, _ := pem.Decode(keyBytes)
+	if block == nil {
+		panic(errors.New("public key error"))
+	}
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		panic(err)
 	}
 
-	// Now all nodes are ready, initiate the client node
-	println("initiating client...")
-	wg.Add(1) // We are adding 1 goroutine we want to wait for
-	go func() {
-		elapsedTime = clientSendMessageAndListen(clientAddr, nodeTable, data, numNodes)
-		wg.Done() // Signal that the goroutine is finished
-	}()
-	wg.Wait() // Wait until all goroutines have finished
-	return elapsedTime
+	hashed := sha256.Sum256(data)
+	err = rsa.VerifyPKCS1v15(pubKey.(*rsa.PublicKey), crypto.SHA256, hashed[:], signData)
+	if err != nil {
+		panic(err)
+	}
+	return true
+}
+
+// TCP listening from node side
+func (p *pbft) tcpListen(ready chan<- bool) {
+
+	//println("starting")
+	listen, err := net.Listen("tcp", p.node.addr)
+	if err != nil {
+		log.Panic(err)
+	}
+	//fmt.Printf("Node listening starts, address：%s\n", p.node.addr)
+	defer listen.Close()
+	ready <- true // Signal that the server is ready
+	for {
+		conn, err := listen.Accept()
+		if err != nil {
+			log.Panic(err)
+		}
+		b, err := ioutil.ReadAll(conn)
+		if err != nil {
+			log.Panic(err)
+		}
+		p.handleRequest(b)
+	}
+
+}
+
+func (p *pbft) prepareStageHandle(pre Prepare, digestByte []byte) {
+
+	p.setPrePareConfirmMap(pre.Digest, pre.NodeID, true)
+
+	count := p.getPrepareCount(pre)
+
+	specifiedCount := p.getSpecifiedPrepareCount()
+
+	//To obtain the public key of the message source node for digital signature verification
+	if count >= specifiedCount && !p.isCommitBordcast[pre.Digest] {
+
+		p.finalizePrepare(digestByte, pre)
+
+	}
+
+}
+
+func (p *pbft) getSpecifiedPrepareCount() int {
+	//Because the primary node does not send Prepare, it does not include itself
+	specifiedCount := 0
+	if p.node.nodeID == "N0" {
+		specifiedCount = p.nodeCount / 3 * 2
+	} else {
+		specifiedCount = (p.nodeCount / 3 * 2) - 1
+	}
+	return specifiedCount
+}
+
+func (p *pbft) getPrepareCount(pre Prepare) int {
+	count := 0
+	for range p.prePareConfirmCount[pre.Digest] {
+		count++
+	}
+	return count
+}
+
+func (p *pbft) finalizePrepare(digestByte []byte, pre Prepare) {
+	//If a node has received at least 2f Prepare messages (including itself) and
+	//has not yet performed a commit broadcast, it will proceed with a commit broadcast
+	p.lock.Lock()
+	//fmt.Println("This node has received at least 2f Prepare messages (including the local node) from other nodes ...")
+	//The node signs it with its private key
+	sign := p.RsaSignWithSha256(digestByte, p.node.rsaPrivKey)
+	c := Commit{pre.Digest, pre.SequenceID, p.node.nodeID, sign}
+	bc, err := json.Marshal(c)
+	if err != nil {
+		log.Panic(err)
+	}
+	//Broadcasting the commit message
+	//fmt.Println("broadcasting the commit message...")
+	p.broadcast(cCommit, bc)
+	p.isCommitBordcast[pre.Digest] = true
+	//fmt.Println("commit broadcast is completed")
+	p.lock.Unlock()
+}
+
+func (p *pbft) commitStageHandle(c Commit) {
+
+	p.setCommitConfirmMap(c.Digest, c.NodeID, true)
+
+	count := p.getCommitCount(c)
+
+	specifiedCount := p.getSpecifiedCommitCount()
+
+	//If a node has received at least 2f+1 commit messages (including itself), and the node has not replied before,
+	//and a commit broadcast has been performed, then the information is submitted to the local message pool,
+	//and a successful flag is replied to the client!
+
+	if count >= specifiedCount && !p.isReply[c.Digest] && p.isCommitBordcast[c.Digest] {
+		p.finalizeCommit(c)
+	}
+
+}
+
+func (p *pbft) getCommitCount(c Commit) int {
+	count := 0
+	for range p.commitConfirmCount[c.Digest] {
+		count++
+	}
+	return count
+}
+
+func (p *pbft) getSpecifiedCommitCount() int {
+	return p.nodeCount / 3 * 2
+}
+
+func (p *pbft) finalizeCommit(c Commit) {
+	p.lock.Lock()
+	//fmt.Println("This node has received at least 2f + 1 Commit messages (including the local node) from other nodes ...")
+	//The message information is being submitted to the local message pool!
+	p.localMessagePool = append(p.localMessagePool, p.messagePool[c.Digest].Message)
+	info := p.node.nodeID + "node has put msgid:" + strconv.Itoa(p.messagePool[c.Digest].ID) + "into the local message pool,message content：" + p.messagePool[c.Digest].Content
+	//fmt.Println(info)
+	//fmt.Println("Replying to client ...")
+	tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr)
+	p.isReply[c.Digest] = true
+	//fmt.Println("replying done!")
+	p.lock.Unlock()
+}
+
+func (p *pbft) handleTempPool() {
+	p.lock.Lock()
+	for _, prepare := range p.tempPreparePool {
+		content, _ := json.Marshal(prepare)
+		p.handlePrepare(content)
+	}
+
+	p.tempPreparePool = []Prepare{}
+
+	for _, commit := range p.tempCommitPool {
+		content, _ := json.Marshal(commit)
+		p.handleCommit(content)
+	}
+
+	p.tempCommitPool = []Commit{}
+
+	p.lock.Unlock()
 }

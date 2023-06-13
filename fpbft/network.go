@@ -31,9 +31,13 @@ func genPBFTSynchronize(numNodes int, data string, clientAddr string) float64 {
 
 	// Now all nodes are ready, initiate the client node
 	println("initiating client...")
+	myClient := client{
+		clientAddr: clientAddr,
+		index:      1,
+	}
 	wg.Add(1) // We are adding 1 goroutine we want to wait for
 	go func() {
-		elapsedTime = clientSendMessageAndListen(clientAddr, nodeTable, data, numNodes)
+		elapsedTime = myClient.ClientSendMessageAndListen(nodeTable, data, numNodes)
 		wg.Done() // Signal that the goroutine is finished
 	}()
 	wg.Wait() // Wait until all goroutines have finished
