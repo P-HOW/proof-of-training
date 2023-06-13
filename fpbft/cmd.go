@@ -96,6 +96,6 @@ func getDigest(request Request) string {
 		log.Panic(err)
 	}
 	hash := sha256.Sum256(b)
-	//hex encoding
+	//hex encoding of the hash
 	return hex.EncodeToString(hash[:])
 }
