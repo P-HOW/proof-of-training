@@ -17,7 +17,7 @@ type client struct {
 	index      int //client ID for convenience purposes
 }
 
-func (c *client) clientSendMessageAndListen(nodeTable nodeTable, data string, numNodes int) float64 {
+func (c *client) ClientSendMessageAndListen(nodeTable nodeTable, data string, numNodes int) float64 {
 	var wg sync.WaitGroup
 
 	//Start local monitoring of the client (mainly used to receive reply information from nodes).
