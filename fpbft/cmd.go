@@ -7,6 +7,9 @@ import (
 	"log"
 )
 
+// Node table for broadcasting
+type nodeTable map[string]string
+
 // <REQUEST,o,t,c>
 type Request struct {
 	Message
