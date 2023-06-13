@@ -35,6 +35,7 @@ func clientTcpListen(clientAddr string, numNodes int) {
 
 // TCP listening from node side
 func (p *pbft) tcpListen(ready chan<- bool) {
+
 	//println("starting")
 	listen, err := net.Listen("tcp", p.node.addr)
 	if err != nil {
