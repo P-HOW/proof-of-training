@@ -2,7 +2,10 @@ package pbft
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 func genPBFTSynchronize(numNodes int, data string, clientAddr string) float64 {
@@ -42,4 +45,32 @@ func genPBFTSynchronize(numNodes int, data string, clientAddr string) float64 {
 	}()
 	wg.Wait() // Wait until all goroutines have finished
 	return elapsedTime
+}
+
+func applyLatency(t float64) {
+	r := rand.Float64()            // generates a random float between 0.0 and 1.0
+	latency := 0.1*t + r*(t-0.1*t) // calculate latency in range of 0.1t to t
+	time.Sleep(time.Duration(latency) * time.Millisecond)
+}
+
+type throttledWriter struct {
+	w              io.Writer
+	bandwidthLimit int
+}
+
+func (tw *throttledWriter) Write(p []byte) (n int, err error) {
+	chunkSize := tw.bandwidthLimit / 10 // Adjust this as per your requirements
+	for len(p) > 0 {
+		time.Sleep(time.Second / 10) // Simulate bandwidth limit
+		chunk := p
+		if len(chunk) > chunkSize {
+			chunk = chunk[:chunkSize]
+		}
+		n, err = tw.w.Write(chunk)
+		if err != nil {
+			return
+		}
+		p = p[n:]
+	}
+	return
 }

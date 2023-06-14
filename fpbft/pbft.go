@@ -349,6 +349,7 @@ func (p *pbft) tcpListen(ready chan<- bool) {
 	}
 	//fmt.Printf("Node listening starts, address：%s\n", p.node.addr)
 	defer listen.Close()
+
 	ready <- true // Signal that the server is ready
 	for {
 		conn, err := listen.Accept()
