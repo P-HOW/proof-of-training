@@ -15,6 +15,8 @@ import (
 type client struct {
 	clientAddr string
 	index      int //client ID for convenience purposes
+	bandwidth  float64
+	latency    float64
 }
 
 func (c *client) ClientSendMessageAndListen(nodeTable nodeTable, data string, numNodes int) float64 {
@@ -42,7 +44,7 @@ func (c *client) ClientSendMessageAndListen(nodeTable nodeTable, data string, nu
 	content := jointMessage(cRequest, br)
 	currentTime := time.Now()
 	//N0 is the primary node, and the request information is sent directly to N0 by default
-	tcpDial(content, nodeTable["N0"])
+	tcpDial(content, nodeTable["N0"], int(c.bandwidth*1024*1024/8), c.latency)
 
 	wg.Wait() // Wait for all the replies before proceeding
 

@@ -64,9 +64,15 @@ type pbft struct {
 
 	//Temp commit pool (simulating the unconfirmed layer), only after getting the map true
 	tempCommitPool []Commit
+
+	//Bandwidth of nodes, in Mbps
+	bandwidth int
+
+	//latency in milliseconds
+	latency float64
 }
 
-func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int) *pbft {
+func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int, bandwidth float64, latency float64) *pbft {
 	p := new(pbft)
 	p.node.nodeID = nodeID
 	p.node.addr = addr
@@ -83,6 +89,8 @@ func NewPBFT(nodeID, addr string, nodeTable nodeTable, nodeCount int) *pbft {
 	p.localMessagePool = []Message{}
 	p.tempPreparePool = []Prepare{}
 	p.tempCommitPool = []Commit{}
+	p.bandwidth = int(bandwidth * 1024 * 1024 / 8)
+	p.latency = latency
 	return p
 }
 
@@ -235,7 +243,7 @@ func (p *pbft) handleCommit(content []byte) {
 			info := p.node.nodeID + "node has put msgid:" + strconv.Itoa(p.messagePool[c.Digest].ID) + "into the local message pool,message content：" + p.messagePool[c.Digest].Content
 			//fmt.Println(info)
 			//fmt.Println("Replying to client ...")
-			tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr)
+			tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr, p.bandwidth, p.latency)
 			p.isReply[c.Digest] = true
 			//fmt.Println("replying done!")
 		}
@@ -258,7 +266,7 @@ func (p *pbft) broadcast(cmd command, content []byte) {
 			continue
 		}
 
-		go tcpDial(message, p.nodeTable[i])
+		go tcpDial(message, p.nodeTable[i], p.bandwidth, p.latency)
 	}
 }
 
@@ -459,7 +467,7 @@ func (p *pbft) finalizeCommit(c Commit) {
 	info := p.node.nodeID + "node has put msgid:" + strconv.Itoa(p.messagePool[c.Digest].ID) + "into the local message pool,message content：" + p.messagePool[c.Digest].Content
 	//fmt.Println(info)
 	//fmt.Println("Replying to client ...")
-	tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr)
+	tcpDial([]byte(info), p.messagePool[c.Digest].ClientAddr, p.bandwidth, p.latency)
 	p.isReply[c.Digest] = true
 	//fmt.Println("replying done!")
 	p.lock.Unlock()
