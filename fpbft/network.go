@@ -90,3 +90,14 @@ func (tw *throttledWriter) Write(p []byte) (n int, err error) {
 	}
 	return
 }
+
+// Generate a random string with the size of `length` bytes
+func randomString(length int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+	s := make([]rune, length)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
+}
