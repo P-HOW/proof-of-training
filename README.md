@@ -16,7 +16,7 @@ Golang execution layer implementation of the decentralized training network usin
 
 - [Layer-1 Implementation(L1)](#layer-1-implementation)
     - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
-    - [DDev or Colima](#ddev)
+    - [(Recommended) Full Practical Byzantine Fault Tolerance (FPBFT)](#fpbft-package)
     - [TER](#ter-extension)
 - [TYPO3 setup](#typo3-setup)
     - [Database setup](#database-setup)
@@ -111,6 +111,57 @@ It takes 0.032963246 seconds to synchronize the transactions to the global ledge
 PASS
 ```
 
+### FPBFT Package
+FPBFT is a comprehensive simulation of the PBFT (Practical Byzantine Fault Tolerance) algorithm, designed to emulate real-world network conditions in distributed consensus scenarios. Unlike other PBFT implementations, FPBFT emphasizes the importance of varying network conditions, specifically network latency and bandwidth limit, which significantly impact the performance and fault tolerance of a distributed system. In real-world scenarios, nodes in a distributed network are dispersed across various geographical regions, each experiencing different network conditions. FPBFT integrates these parameters into the PBFT network generation, thereby setting itself apart as a full implementation of the PBFT algorithm.
+#### Functionality Implemented:
+> In addition to PBFT package, the FPBFT package emulated a real network by adding bandwidthLimit and latency 
+> as input parameters when generating the network.
+
+Field | Data Types | Sample Value
+----  |------------| ----------
+numNodes  | int        | 30-1000
+data  | string     | "transactions"
+clientAddr  | string     | "127.0.0.1:8888"
+bandwidthLimit  | float64    | 20 (Mbps)
+latency  | float64    | 350 (ms)
+
+```go
+synctime := genPBFTSynchronize(numNodes int, data string, clientAddr string, bandwidthLimit float64, latency float64)
+```
+> Note: by setting `bandwidthLimit` and `latency` to 0, 
+> the function becomes PBFT as a special case.
+
+#### fpbft_test.go
+```go
+package fpbft
+
+import (
+  "strconv"
+  "testing"
+)
+
+func TestAddAndGetMessage(t *testing.T) {
+  var clientAddr = "127.0.0.1:8888"
+  var data = "transactions to be synchronized"
+  var numNodes = 10
+  sync_time := genPBFTSynchronize(numNodes, data, clientAddr, 0.01, 300)
+  s := strconv.FormatFloat(sync_time, 'f', -1, 64)
+  println("It takes " + s + " seconds to synchronize the transactions to the global ledger")
+}
+
+```
+#### output
+```text
+=== RUN   TestAddAndGetMessage
+initiating client...
+The primary node has received a request from the client...
+The request has been stored in the temporary message pool.
+Broadcasting PrePrepare to other nodes...
+PrePrepare broadcast completed.
+It takes 2.264332033 seconds to synchronize the transactions to the global ledger
+--- PASS: TestAddAndGetMessage (2.26s)
+PASS
+```
 
 It will install TYPO3 into the `./myshop/` directory. Change into the directory and install TYPO3 as usual:
 

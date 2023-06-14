@@ -1,4 +1,4 @@
-package pbft
+package fpbft
 
 import (
 	"log"
