@@ -14,7 +14,7 @@ Golang execution layer implementation of the decentralized training network usin
 
 ## Table Of Content
 
-- [Layer-1 Implementation(L1)](#layer-1-implementation)
+- [Layer-1(L1) Implementation and Tests](#layer-1-implementation)
     - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
     - [(Recommended) Full Practical Byzantine Fault Tolerance (FPBFT)](#fpbft-package)
     - [TER](#ter-extension)
