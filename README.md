@@ -13,12 +13,11 @@ Golang execution layer implementation of the decentralized training network usin
 ![DTN](https://github.com/P-HOW/proof-of-training/blob/master/img/dtn.jpg?raw=true)
 
 ## Table Of Content
-
+- [Introduction](#introduction)
 - [Layer-1(L1) Implementation and Tests](#layer-1-implementation-and-tests)
     - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
     - [(Recommended) Full Practical Byzantine Fault Tolerance (FPBFT)](#fpbft-package)
-    - [TER](#ter-extension)
-- [TYPO3 setup](#typo3-setup)
+- [Layer-2(L2) Implementation and Tests](#layer-2-implementation-and-tests)
     - [Database setup](#database-setup)
     - [Security](#security)
 - [Page setup](#page-setup)
@@ -30,13 +29,14 @@ Golang execution layer implementation of the decentralized training network usin
     - [SEO-friendly URLs](#seo-friendly-urls)
 - [License](#license)
 - [Links](#links)
+## Introduction
+This repo provides a miniature kernel realization of various components of the Decentralized Training Network (DTN) based on Proof-of-Training (POT). It primarily focuses on several fundamental aspects of both our Layer-1 (L1) and Layer-2 (L2) implementations.
+
+- **Global Ledger Maintenance and Synchronization**
+- Multisignature Coordination
 
 ## Layer-1 Implementation and Tests
 
-This section focuses on two fundamental aspects of our Layer-1 (L1) implementation, namely:
-
-- **Global Ledger Maintenance and Synchronization** 
-- Multisignature Coordination
 
 Our L1 implementation uses the [Practical Byzantine Fault Tolerance (PBFT)](https://pmg.csail.mit.edu/papers/osdi99.pdf) protocol, which ensures consensus among nodes in a distributed network, even in the presence of malicious nodes or if certain nodes fail.
 
@@ -162,6 +162,22 @@ It takes 2.264332033 seconds to synchronize the transactions to the global ledge
 --- PASS: TestAddAndGetMessage (2.26s)
 PASS
 ```
+Sample experiments were conducted on a 64-bit Ubuntu 22.04.2 LTS system powered by the 12th Generation Intel® Core™ i7-12700T 
+processor with 20 cores, and equipped with 32GB memory.With the following performance matrix:
+
+| Scenario (Message Size) | Network Size (nodes) | Slow (0.1 Mbps) | Medium (30 Mbps) | Fast (125 Mbps) |
+|-------------------------|----------------------|-----------------|------------------|-----------------|
+| 100 transactions        | Small (10 nodes)     | 8.609           | 1.494            | 1.497           |
+| 100 transactions        | Medium (30 nodes)    | 8.707           | 1.685            | 1.755           |
+| 1000 transactions       | Medium (30 nodes)    | 73.536          | 1.682            | 1.833           |
+| 100 transactions        | Large (50 nodes)     | 8.697           | 1.842            | 1.752           |
+| 200 transactions        | Large (50 nodes)     | 15.984          | 1.908            | 1.893           |
+| 5000 transactions       | Large (50 nodes)     | 37.532          | 1.767            | 1.678           |
+| 10000 transactions      | Large (50 nodes)     | -               | 7.215            | 2.074           |
+
+
+
+## Layer-2 Implementation and Tests
 
 It will install TYPO3 into the `./myshop/` directory. Change into the directory and install TYPO3 as usual:
 
