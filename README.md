@@ -165,15 +165,18 @@ PASS
 Sample experiments were conducted on a 64-bit Ubuntu 22.04.2 LTS system powered by the 12th Generation Intel® Core™ i7-12700T 
 processor with 20 cores, and equipped with 32GB memory.With the following performance matrix:
 
-| Scenario (Message Size) | Network Size (nodes) | Slow (0.1 Mbps) | Medium (30 Mbps) | Fast (125 Mbps) |
-|-------------------------|----------------------|-----------------|------------------|-----------------|
-| 100 transactions        | Small (10 nodes)     | 8.609           | 1.494            | 1.497           |
-| 100 transactions        | Medium (30 nodes)    | 8.707           | 1.685            | 1.755           |
-| 1000 transactions       | Medium (30 nodes)    | 73.536          | 1.682            | 1.833           |
-| 100 transactions        | Large (50 nodes)     | 8.697           | 1.842            | 1.752           |
-| 200 transactions        | Large (50 nodes)     | 15.984          | 1.908            | 1.893           |
-| 5000 transactions       | Large (50 nodes)     | 37.532          | 1.767            | 1.678           |
-| 10000 transactions      | Large (50 nodes)     | -               | 7.215            | 2.074           |
+| Message Size | Network Size | Slow (0.1 Mbps) | Medium (30 Mbps) | Fast (125 Mbps) |
+|--------------|--------------|-----------------|------------------|-----------------|
+| 100 transactions | Small (10 nodes) | 8.609 s | 1.494 s | 1.497 s |
+| 100 transactions | Medium (30 nodes) | 8.707 s | 1.685 s | 1.755 s |
+| 1000 transactions | Medium (30 nodes) | 73.536 s | 1.682 s | 1.833 s |
+| 100 transactions | Large (50 nodes) | 8.697 s | 1.842 s | 1.752 s |
+| 200 transactions | Large (50 nodes) | 15.984 s | 1.908 s | 1.893 s |
+| 5000 transactions | Large (50 nodes) | 37.532 s | 1.767 s | 1.678 s |
+| 10000 transactions | Large (50 nodes) | - | 7.215 s | 2.074 s |
+
+Note: The experiments were conducted on a 64-bit Ubuntu 22.04.2 LTS system powered by the 12th Generation Intel® Core™ i7-12700T processor with 20 cores, and equipped with 32GB memory.
+
 
 
 
