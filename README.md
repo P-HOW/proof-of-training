@@ -163,7 +163,7 @@ It takes 2.264332033 seconds to synchronize the transactions to the global ledge
 PASS
 ```
 Sample experiments were conducted on a 64-bit Ubuntu 22.04.2 LTS system powered by the 12th Generation Intel® Core™ i7-12700T 
-processor with 20 cores, and equipped with 32GB memory.With the following performance matrix:
+processor with 20 cores, and equipped with 32GB memory. With the following performance matrix:
 
 | Message Size | Network Size | Slow (0.1 Mbps) | Medium (30 Mbps) | Fast (125 Mbps) |
 |--------------|--------------|-----------------|------------------|-----------------|
