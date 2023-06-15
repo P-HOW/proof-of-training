@@ -175,7 +175,6 @@ processor with 20 cores, and equipped with 32GB memory.With the following perfor
 | 5000 transactions | Large (50 nodes) | 37.532 s | 1.767 s | 1.678 s |
 | 10000 transactions | Large (50 nodes) | - | 7.215 s | 2.074 s |
 
-Note: The experiments were conducted on a 64-bit Ubuntu 22.04.2 LTS system powered by the 12th Generation Intel® Core™ i7-12700T processor with 20 cores, and equipped with 32GB memory.
 
 
 
