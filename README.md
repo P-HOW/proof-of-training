@@ -18,15 +18,8 @@ Golang execution layer implementation of the decentralized training network usin
     - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
     - [(Recommended) Full Practical Byzantine Fault Tolerance (FPBFT)](#fpbft-package)
 - [Layer-2(L2) Implementation and Tests](#layer-2-implementation-and-tests)
-    - [Database setup](#database-setup)
-    - [Security](#security)
-- [Page setup](#page-setup)
-    - [Download the Aimeos Page Tree t3d file](#download-the-aimeos-page-tree-t3d-file)
-    - [Go to the Import View](#go-to-the-import-view)
-    - [Upload the page tree file](#upload-the-page-tree-file)
-    - [Go to the import view](#go-to-the-import-view)
-    - [Import the page tree](#import-the-page-tree)
-    - [SEO-friendly URLs](#seo-friendly-urls)
+    - [Setup](#setup)
+    - [Compile and Deploy](#compile-and-deploy)
 - [License](#license)
 - [Links](#links)
 ## Introduction
@@ -180,21 +173,80 @@ processor with 20 cores, and equipped with 32GB memory. With the following perfo
 
 
 ## Layer-2 Implementation and Tests
-
-It will install TYPO3 into the `./myshop/` directory. Change into the directory and install TYPO3 as usual:
+This section provides a concrete implementation of a Layer-2 in the DTN. It leverages Ethereum 
+smart contracts, deployed on the Binance Smart Chain (BSC) Testnet, to handle token balances 
+and transactions more efficiently. In this guide, we go through how to set up the development 
+environment and run the tests, ensuring that the Layer-2 solution functions as expected. 
+We'll be using Truffle, a popular Ethereum development environment, to compile, deploy, 
+and test our smart contracts on the BSC Testnet.
+### Setup
+Before you begin, make sure you have installed the latest version of [Node.js and npm](https://nodejs.org/en/download/). We put our implementations in the `./crypto/` directory. Change into the directory and install [truffle](https://trufflesuite.com/docs/truffle/quickstart/):
 
 ```bash
-cd ./myshop
-touch public/FIRST_INSTALL
+npm install -g truffle
 ```
 
-Open the TYPO3 URL in your browser and follow the setup steps. Afterwards, install the Aimeos extension using:
-
+If you want to run the tests by deploying the smart contracts to BSC testnet on your own, you need to 
+generate the keys for testing by running 
 ```bash
-composer req aimeos/aimeos-typo3:~23.4
+node wallet/generate.js 
 ```
+which helps you generate 30 random keys with private keys and addresses stored in `keys.json`. 
 
-If composer complains that one or more packages can't be installed because the required minimum stability isn't met, add this to your `composer.json`:
+### Compile and Deploy
+To compile the contract, run:
+```bash
+truffle compile
+```
+The `truffle-config.js` is written to
+migrate the contracts to BSC testnet so you might consider getting some test BNB(TBNB) by getting from the [BNB faucet](https://testnet.binance.org/faucet-smart/) with the addresses you just generated.
+Then, replace the `privateKeys` in the config file with the one you have TBNB in. Once set, run:
+```bash
+truffle migrate --network testnet
+```
+#### output
+```text
+> Compiled successfully using:
+   - solc: 0.8.13+commit.abaa5c0e.Emscripten.clang
+
+
+Starting migrations...
+======================
+> Network name:    'testnet'
+> Network id:      97
+> Block gas limit: 50000000 (0x2faf080)
+
+
+1_deploy_contracts.js
+=====================
+
+   Deploying 'MultiSigContract'
+   ----------------------------
+   > transaction hash:    0xd0598d6c326e10c0fc64f1854de44cbbce7810b1307750ae0a48283a2e707d79
+   > Blocks: 3            Seconds: 11
+   > contract address:    0xDf033A1959006CD99c2549d5F6B427978b1cE2e8
+   > block number:        30812543
+   > block timestamp:     1687132610
+   > account:             0xDF86931B3Bd2a3A65b7313cE8cBf7B63a6B203ef
+   > balance:             0.39154595
+   > gas used:            2169081 (0x2118f9)
+   > gas price:           50 gwei
+   > value sent:          0 ETH
+   > total cost:          0.10845405 ETH
+
+   > Saving artifacts
+   -------------------------------------
+   > Total cost:          0.10845405 ETH
+
+Summary
+=======
+> Total deployments:   1
+> Final cost:          0.10845405 ETH
+```
+and you will be able to check the deployment details from [bscscan](https://testnet.bscscan.com/) by searching the transaction hash:
+
+![Install Aimeos TYPO3 extension](https://github.com/P-HOW/proof-of-training/blob/master/img/testbsc.png?raw=true)
+
 
 ```json
 "minimum-stability": "dev",
