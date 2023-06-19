@@ -249,21 +249,37 @@ and you will be able to check the deployment details from [bscscan](https://test
 ![Install Aimeos TYPO3 extension](https://github.com/P-HOW/proof-of-training/blob/master/img/testbsc.png?raw=true)
 
 ### Test
-```json
-"minimum-stability": "dev",
-"prefer-stable": true,
+To run the test, first distribute TBNB to other multi-sig wallets.
+```bash
+node transfer.js
 ```
+Then test functions in the delpoyed contract by running:
+```bash
+truffle test --network testnet
+```
+Three contract functions are involved in the rewards distribution process for `_destination(address)`, which successfully generated the best AI model for a certain order:
 
+![Reward Update Image](https://github.com/P-HOW/proof-of-training/blob/master/img/rewardUpdate.png?raw=true)
 
+| Function Name | Input Parameters | Gas Cost | Number of Executions |
+| --- | --- | --- |----------------------|
+| proposeTransaction | _destination (address), _value (uint) | 86,875 | 1                    |
+| confirmTransaction | _txIndex (uint) |  45,371 | `numSignaturesRequired`                  |
+| executeTransaction | _txIndex (uint) | 161,888 | 1                    |
+
+The tests provided summarizes the gas costs and execution counts for the key functions within 
+the MultiSigContract deployed on the BSC testnet. These metrics can help in estimating 
+the real costs of operations on BSC or Ethereum mainnet, as the actual cost can be 
+by multiplying the gas cost with the current gas price. 
 ## License
 
-The Aimeos TYPO3 extension is licensed under the terms of the GPL Open Source
+The decentralized training network (DTN) as an implementation of proof of training (POT) is licensed under the terms of MIT
 license and is available for free.
 
 ## Links
 
-* [Web site](https://aimeos.org/integrations/typo3-shop-extension/)
-* [Documentation](https://aimeos.org/docs/TYPO3)
-* [Forum](https://aimeos.org/help/typo3-extension-f16/)
-* [Issue tracker](https://github.com/aimeos/aimeos-typo3/issues)
-* [Source code](https://github.com/aimeos/aimeos-typo3)
+* [Paper](https://arxiv.org/)
+* [PBFT Reference Documentation](https://pmg.csail.mit.edu/papers/osdi99.pdf)
+* [Testnet Contract](https://testnet.bscscan.com/address/0xdf033a1959006cd99c2549d5f6b427978b1ce2e8)
+* [Issue tracker](https://github.com/P-HOW/proof-of-training/issues)
+* [Author Info](https://lipeihao.com/)
