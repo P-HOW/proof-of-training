@@ -18,8 +18,9 @@ Golang execution layer implementation of the decentralized training network usin
     - [Practical Byzantine Fault Tolerance (PBFT)](#pbft-package)
     - [(Recommended) Full Practical Byzantine Fault Tolerance (FPBFT)](#fpbft-package)
 - [Layer-2(L2) Implementation and Tests](#layer-2-implementation-and-tests)
-    - [Setup](#setup)
-    - [Compile and Deploy](#compile-and-deploy)
+    - [Environment Setup](#setup)
+    - [Compile and Deploy in the Truffle Framework](#compile-and-deploy)
+    - [Contract Testing](#test)
 - [License](#license)
 - [Links](#links)
 ## Introduction
@@ -247,7 +248,7 @@ and you will be able to check the deployment details from [bscscan](https://test
 
 ![Install Aimeos TYPO3 extension](https://github.com/P-HOW/proof-of-training/blob/master/img/testbsc.png?raw=true)
 
-
+### Test
 ```json
 "minimum-stability": "dev",
 "prefer-stable": true,
