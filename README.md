@@ -278,7 +278,7 @@ license and is available for free.
 
 ## Links
 
-* [Paper](https://arxiv.org/)
+* [Paper](https://arxiv.org/pdf/2307.07066.pdf)
 * [PBFT Reference Documentation](https://pmg.csail.mit.edu/papers/osdi99.pdf)
 * [Testnet Contract](https://testnet.bscscan.com/address/0xdf033a1959006cd99c2549d5f6b427978b1ce2e8)
 * [Issue tracker](https://github.com/P-HOW/proof-of-training/issues)
